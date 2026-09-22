@@ -219,4 +219,37 @@ def criar_venda(
     db.refresh(nova_venda)
 
     return nova_venda
-    
+
+@app.get("/vendas")
+def listar_vendas(db: Session = Depends(get_db)):
+    vendas = db.query(Venda).all()
+    resultado = []
+
+    for venda in vendas:
+        itens = db.query(ItemVenda).filter(
+            ItemVenda.venda_id == venda.id
+        ).all()
+
+        itens_resultado = []
+
+        for item in itens:
+            produto = db.query(Produto).filter(
+                Produto.id == item.produto_id
+            ).first()
+
+            itens_resultado.append({
+                "produto_id": item.produto_id,
+                "produto_nome": produto.nome,
+                "quantidade": item.quantidade,
+                "preco_unitario": item.preco_unitario,
+                "subtotal": item.subtotal
+            })
+
+        resultado.append({
+            "id": venda.id,
+            "data_hora": venda.data_hora,
+            "valor_total": venda.valor_total,
+            "itens": itens_resultado
+        })
+
+    return resultado     
